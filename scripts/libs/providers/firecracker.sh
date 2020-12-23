@@ -5,20 +5,20 @@ source "$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/../common.sh")"
 
 function setup() {
   # install prerequisites
-  _install_firecracker
+  _install_tools
 
   for ((i = 1; i <= NODE_NUM; i++)); do
     sudo ignite run ghcr.io/innobead/kubefire-ubuntu:20.04 \
       --name "$NODE_PREFIX"-"$i" \
-      --kernel-image ghcr.io/innobead/kubefire-ignite-kernel:5.4.43-amd64 \
-      --cpus 1 \
-      --memory 512MB \
+      --kernel-image ghcr.io/innobead/kubefire-ignite-kernel:4.19.125-amd64 \
+      --cpus "$NODE_CPUS" \
+      --memory "$NODE_MEM"B \
       --ssh="$PUB_KEY"
   done
 }
 
 function clean() {
-  mapfile -t nodes < <(sudo ignite ps -t "{{.Name}}" | grep "$NODE_PREFIX")
+  mapfile -t nodes < <(sudo ignite ps -a -t "{{.Name}}" | grep "$NODE_PREFIX")
 
   for node in "${nodes[@]}"; do
     sudo ignite rm "$node" --force
@@ -30,7 +30,7 @@ function ssh() {
 }
 
 function info() {
-  mapfile -t nodes < <(sudo ignite ps -t "{{.Name}}" | grep "$NODE_PREFIX")
+  mapfile -t nodes < <(sudo ignite ps -a -t "{{.Name}}" | grep "$NODE_PREFIX")
 
   if [ ${#nodes[@]} -eq 0 ]; then
       _error "No VMs provisioned"
@@ -51,7 +51,7 @@ PRI_KEY=$PRI_KEY
 EOF
 }
 
-function _install_firecracker() {
+function _install_tools() {
   _install_huber
 
   if [[ ! $(command -v kubefire) ]] || [ "$FORCE_INSTALL_PRE" == "true" ]; then

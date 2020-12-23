@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 
+NODE_PREFIX="$(basename -s .sh "$0")"
+
 source "$(dirname "$0")"/libs/providers/firecracker.sh
 
 set -o errexit
 set -o pipefail
-#set -o xtrace
-
-NODE_PREFIX="$(basename -s .sh "$0")"
-NODE_NUM=${NODE_NUM:-1}
-PUB_KEY=${PUB_KEY:-$HOME/.ssh/id_rsa.pub}
-PRI_KEY=${PRI_KEY:-$HOME/.ssh/id_rsa}
 
 function help() {
   filename="$NODE_PREFIX.sh"
@@ -43,10 +39,15 @@ setup | ssh | env)
     NODE_NUM=$2
   fi
 
+  if [ "$1" != "env" ]; then
+    set -o xtrace
+  fi
+
   $1 "$NODE_NUM"
   ;;
 
 clean)
+  set -o xtrace
   $1
   ;;
 
