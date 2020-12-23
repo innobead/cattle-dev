@@ -24,6 +24,7 @@ cd "$(dirname "$0")"/../
 pushd /home/davidko/github/k3s-io/k3s
 
 cmds=(
+  "make .dapper"
   "$DAPPER_OPTS ./.dapper --keep download"
   "make deps"
   "$DAPPER_OPTS ./.dapper --keep generate"
