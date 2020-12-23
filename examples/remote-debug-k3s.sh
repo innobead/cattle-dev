@@ -35,9 +35,8 @@ cmds=(
 
   # Why use GO111MODULE=off in dapper given the project will be copied to GOPATH, this is because runc will not be built successfully w/o missing vendor folder
   # ref: https://github.com/k3s-io/k3s/blob/2ea6b16315c093d739c370f8f035ad3fa5eb5d11/vendor/github.com/opencontainers/runc/Makefile#L19-L19
-  #  "$DAPPER_OPTS ./.dapper --keep build"
+  "$DAPPER_OPTS ./.dapper --keep build"
   #  "$DAPPER_OPTS ./.dapper --keep package-cli"
-  "$DAPPER_OPTS ./scripts/build"
   "$DAPPER_OPTS ./scripts/package-cli"
 )
 
