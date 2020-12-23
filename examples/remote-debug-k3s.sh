@@ -18,10 +18,14 @@ set -o xtrace
 #+CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS" -gcflags "all=-N -l" -o ${CMD_NAME} ./cmd/k3s/main.go
 #
 
-DAPPER_OPTS="DAPPER_MODE=bind DAPPER_ENV="""
+PROJECT_DIR=${PROJECT_DIR:-/home/davidko/github/k3s-io/k3s}
+DAPPER_OPTS=${DAPPER_OPTS:-"DAPPER_MODE=bind"} # You can inject any ENV defined in DAPPER_ENV
+MAIN_ARGS=${MAIN_ARGS:-server}
+EXEC_FILE=${EXEC_FILE:-dist/artifacts/k3s}
+
 cd "$(dirname "$0")"/../
 
-pushd /home/davidko/github/k3s-io/k3s
+pushd "$PROJECT_DIR"
 
 cmds=(
   "make .dapper"
@@ -31,8 +35,10 @@ cmds=(
 
   # Why use GO111MODULE=off in dapper given the project will be copied to GOPATH, this is because runc will not be built successfully w/o missing vendor folder
   # ref: https://github.com/k3s-io/k3s/blob/2ea6b16315c093d739c370f8f035ad3fa5eb5d11/vendor/github.com/opencontainers/runc/Makefile#L19-L19
-  "$DAPPER_OPTS ./.dapper --keep build"
-  "$DAPPER_OPTS ./.dapper --keep package-cli"
+  #  "$DAPPER_OPTS ./.dapper --keep build"
+  #  "$DAPPER_OPTS ./.dapper --keep package-cli"
+  "$DAPPER_OPTS ./scripts/build"
+  "$DAPPER_OPTS ./scripts/package-cli"
 )
 
 for c in "${cmds[@]}"; do
@@ -41,10 +47,10 @@ done
 
 popd
 
-./scripts/vm-provisioner.sh clean || true
-./scripts/vm-provisioner.sh setup
-host=$(./scripts/vm-provisioner.sh env | grep HOST | sed "s#HOST=##")
+./scripts/vm.sh clean || true
+./scripts/vm.sh setup
+host=$(./scripts/vm.sh env | grep HOST | sed "s#HOST=##")
 
 sleep 15
-PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_ARGS="server" EXEC_FILE=dist/artifacts/k3s REMOTE_HOST=$host ./scripts/go-remote-debugger.sh remote_setup
-PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_ARGS="server" EXEC_FILE=dist/artifacts/k3s REMOTE_HOST=$host ./scripts/go-remote-debugger.sh remote_debug
+PROJECT_DIR=$PROJECT_DIR MAIN_ARGS=$MAIN_ARGS EXEC_FILE=$EXEC_FILE REMOTE_HOST=$host ./scripts/go-remote-debug.sh remote_setup
+PROJECT_DIR=$PROJECT_DIR MAIN_ARGS=$MAIN_ARGS EXEC_FILE=$EXEC_FILE REMOTE_HOST=$host ./scripts/go-remote-debug.sh remote_debug

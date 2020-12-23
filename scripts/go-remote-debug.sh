@@ -25,8 +25,6 @@ BUILD_CMD=${BUILD_CMD:-go list -m all || true; go build -gcflags \"all=-N -l\" -
 REMOTE_EXEC_FILE="$(basename "$EXEC_FILE")"
 
 function debug() {
-  rm -rf "$WORKPLACE" && mkdir -p "$WORKPLACE"
-
   build
   remote_setup
   _remote_run
@@ -68,7 +66,7 @@ function remote_setup() {
 
 function remote_debug() {
   cmds=(
-    "source ~/.bashrc && dlv --listen=:"$REMOTE_DEBUG_PORT" --headless=true --api-version=2 --accept-multiclient exec \$HOME/"$REMOTE_EXEC_FILE" $MAIN_ARGS"
+    "source ~/.bashrc && dlv --listen=:"$REMOTE_DEBUG_PORT" --headless=true --api-version=2 --accept-multiclient --check-go-version=false exec \$HOME/"$REMOTE_EXEC_FILE" $MAIN_ARGS"
   )
   _remote_run "${cmds[@]}"
 }
@@ -122,7 +120,7 @@ function help() {
   filename="$FILENAME.sh"
 
   cat <<EOF
-Usage: $filename <build | remote_setup | debug>
+Usage: $filename <build | remote_setup | remote_debug>
 
 Build the local build
 ❯ $filename build
@@ -134,7 +132,7 @@ Debug the remote host
 ❯ $filename remote_debug
 
 Example:
-  PROJECT_DIR=/home/davidko/github/rancher/k3s MAIN_FILE=main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 ./scripts/go-remote-debugger.sh debug
+  PROJECT_DIR=/home/davidko/github/rancher/k3s MAIN_FILE=main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 ./scripts/go-remote-debug.sh debug
 
 EOF
 }
@@ -144,6 +142,8 @@ _check_args $# 1
 case $1 in
 build | remote_setup | remote_debug)
   set -o xtrace
+  rm -rf "$WORKPLACE" && mkdir -p "$WORKPLACE"
+
   $1
   ;;
 
