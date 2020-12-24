@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+CURDIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
+source "${CURDIR}/libs/common.sh"
+source "${CURDIR}/libs/providers/firecracker.sh"
+
+NODE_PREFIX="$(basename -s .sh "$0")"
+
+function help() {
+  filename="$NODE_PREFIX"
+
+  cat <<EOF
+Usage: $filename <setup | clean | ssh | node | env>
+
+❯ setup <number of nodes>   Setup nodes
+❯ clean                     Clean up nodes
+❯ ssh <x-th node>           SSH the node
+❯ node                      Show node names
+❯ env <x-th node>           Show the node environment variables
+EOF
+}
+
+check_args $# 1
+
+case $1 in
+setup | ssh | env)
+  if [ -n "$2" ]; then
+    NODE_NUM=$2
+  fi
+
+  if [ "$1" != "env" ]; then
+    enable_trace
+  fi
+
+  $1 "$NODE_NUM"
+  ;;
+
+clean)
+  enable_trace
+  $1
+  ;;
+
+node)
+  $1
+  ;;
+*)
+  error "$1 command not found" help
+  exit 1
+  ;;
+esac

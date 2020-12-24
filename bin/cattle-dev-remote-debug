@@ -1,33 +1,13 @@
 #!/usr/bin/env bash
 
-source "$(dirname "$0")"/libs/common.sh
-
-set -o errexit
-set -o pipefail
-#set -o xtrace
-
+CURDIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
 FILENAME="$(basename -s .sh "$0")"
-
-GO_VERSION=${GO_VERSION:-go1.15.6}
-REMOTE_USER=${REMOTE_USER:-root}
-REMOTE_HOST=${REMOTE_HOST:?}
-REMOTE_DEBUG_PORT=${REMOTE_DEBUG_PORT:-2345}
-PRI_KEY=${PRI_KEY:-$HOME/.ssh/id_rsa}
-SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-WORKPLACE=${WORKPLACE:-/tmp/$FILENAME}
-
-PROJECT_DIR=${PROJECT_DIR:?}
-MAIN_FILE=${MAIN_FILE:-main.go}
-MAIN_ARGS=${MAIN_ARGS:-}
-EXEC_FILE=${EXEC_FILE:-$(basename -s .go "$MAIN_FILE")}
-BUILD_CMD=${BUILD_CMD:-go list -m all || true; go build -gcflags \"all=-N -l\" -o $EXEC_FILE $MAIN_FILE}
-
-REMOTE_EXEC_FILE="$(basename "$EXEC_FILE")"
+source "${CURDIR}/libs/common.sh"
 
 function debug() {
   build
   remote_setup
-  _remote_run
+  remote_debug
 }
 
 function build() {
@@ -69,11 +49,12 @@ function remote_debug() {
     "source ~/.bashrc && dlv --listen=:"$REMOTE_DEBUG_PORT" --headless=true --api-version=2 --accept-multiclient --check-go-version=false exec \$HOME/"$REMOTE_EXEC_FILE" $MAIN_ARGS"
   )
   _remote_run "${cmds[@]}"
+
 }
 
 function _create_setup_script() {
   if [[ ! $(command -v apt) ]] || [[ ! $(command -v zypper) ]]; then
-    _error "Unsupported OS to setup remote host"
+    error "Unsupported OS to setup remote host"
   fi
 
   cat <<EOF >"$1"
@@ -117,38 +98,62 @@ function _remote_run() {
 }
 
 function help() {
-  filename="$FILENAME.sh"
+  filename="$FILENAME"
 
   cat <<EOF
-Usage: $filename <build | remote_setup | remote_debug>
+Usage: $filename <build | debug | remote_setup | remote_debug>
 
-Build the local build
-❯ $filename build
+❯ build             Build the local build
+❯ debug             build + remote_setup + remote_debug
+❯ remote_setup      Setup the remote host
+❯ remote_debug      Debug the remote host
 
-Setup the remote host
-❯ $filename remote_setup
-
-Debug the remote host
-❯ $filename remote_debug
+Globals Environment Variables: (able to change)
+  GO_VERSION=$GO_VERSION
+  REMOTE_USER=$REMOTE_USER
+  REMOTE_HOST=$REMOTE_HOST
+  REMOTE_DEBUG_PORT=$REMOTE_DEBUG_PORT
+  PRI_KEY=$PRI_KEY
+  WORKPLACE=$WORKPLACE
+  PROJECT_DIR=$PROJECT_DIR
+  MAIN_FILE=$MAIN_FILE
+  MAIN_ARGS=$MAIN_ARGS
+  EXEC_FILE=$EXEC_FILE
+  BUILD_CMD=$BUILD_CMD
 
 Example:
-  PROJECT_DIR=/home/davidko/github/rancher/k3s MAIN_FILE=main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 ./scripts/go-remote-debug.sh debug
-
+  PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_FILE=cmd/k3s/main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 $filename build
+  PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_FILE=cmd/k3s/main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 $filename remote_setup
+  PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_FILE=cmd/k3s/main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 $filename remote_debug
 EOF
 }
 
-_check_args $# 1
+check_args $# 1
+
+GO_VERSION=${GO_VERSION:-go1.15.6}
+REMOTE_USER=${REMOTE_USER:-root}
+REMOTE_HOST=${REMOTE_HOST:-localhost}
+REMOTE_DEBUG_PORT=${REMOTE_DEBUG_PORT:-2345}
+PRI_KEY=${PRI_KEY:-$HOME/.ssh/id_rsa}
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+WORKPLACE=${WORKPLACE:-/tmp/$FILENAME}
+PROJECT_DIR=${PROJECT_DIR:-$(pwd)}
+MAIN_FILE=${MAIN_FILE:-main.go}
+MAIN_ARGS=${MAIN_ARGS:-}
+EXEC_FILE=${EXEC_FILE:-$(basename -s .go "$MAIN_FILE")}
+BUILD_CMD=${BUILD_CMD:-go list -m all || true; go build -gcflags \"all=-N -l\" -o $EXEC_FILE $MAIN_FILE}
+REMOTE_EXEC_FILE="$(basename "$EXEC_FILE")"
 
 case $1 in
-build | remote_setup | remote_debug)
-  set -o xtrace
+debug | build | remote_setup | remote_debug)
+  enable_trace
   rm -rf "$WORKPLACE" && mkdir -p "$WORKPLACE"
 
   $1
   ;;
 
 *)
-  _error "$1 command not found" help
+  error "$1 command not found" help
   exit 1
   ;;
 esac

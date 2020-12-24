@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1090
-source "$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/../common.sh")"
+source "$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")/../common.sh"
 
 function setup() {
-  # install prerequisites
   _install_tools
 
   for ((i = 1; i <= NODE_NUM; i++)); do
@@ -13,6 +11,7 @@ function setup() {
       --kernel-image ghcr.io/innobead/kubefire-ignite-kernel:4.19.125-amd64 \
       --cpus "$NODE_CPUS" \
       --memory "$NODE_MEM"B \
+      --size "$NODE_DISK"B \
       --ssh="$PUB_KEY"
   done
 }
@@ -29,11 +28,11 @@ function ssh() {
   sudo ignite ssh "$NODE_PREFIX"-"$1" -i "$PRI_KEY"
 }
 
-function info() {
+function node() {
   mapfile -t nodes < <(sudo ignite ps -a -t "{{.Name}}" | grep "$NODE_PREFIX")
 
   if [ ${#nodes[@]} -eq 0 ]; then
-      _error "No VMs provisioned"
+      error "No VMs provisioned"
   fi
 
   for node in "${nodes[@]}"; do
@@ -42,7 +41,7 @@ function info() {
 }
 
 function env() {
-  host=$(sudo ignite inspect vm "$NODE_PREFIX"-"$1" | jq -r '.status.network.ipAddresses[0]' 2>/dev/null || _error "VM not found")
+  host=$(sudo ignite inspect vm "$NODE_PREFIX"-"$1" | jq -r '.status.network.ipAddresses[0]' 2>/dev/null || error "VM not found")
 
   cat <<EOF
 NAME=$NODE_PREFIX-$1
@@ -52,11 +51,11 @@ EOF
 }
 
 function _install_tools() {
-  _install_huber
+  install_huber
 
-  if [[ ! $(command -v kubefire) ]] || [ "$FORCE_INSTALL_PRE" == "true" ]; then
+  if [[ ! $(command -v kubefire) ]] || [ "$FORCE_INSTALL" == "true" ]; then
     huber install kubefire
-  elif [ "$FORCE_INSTALL_PRE" == "true" ]; then
+  elif [ "$FORCE_INSTALL" == "true" ]; then
     huber update kubefire
   fi
 

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+CURDIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
+FILENAME="$(basename -s .sh "$0")"
+source "${CURDIR}/libs/common.sh"
+
+function setup_by_apt() {
+  sudo apt update
+  sudo apt install -y build-essential glibc-static
+}
+
+function setup_by_zypper() {
+  sudo zypper ref
+  sudo zypper in -y -t pattern devel_basis
+  sudo zypper in -y glibc-devel-static
+}
+
+case "$(get_pkgmgr)" in
+"zypper")
+  setup_by_zypper
+  ;;
+"apt")
+  setup_by_apt
+  ;;
+*)
+  error "Unsupported environment"
+  ;;
+esac

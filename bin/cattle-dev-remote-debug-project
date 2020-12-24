@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+CURDIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
+FILENAME="$(basename -s .sh "$0")"
+source "${CURDIR}/libs/common.sh"
+
+function main() {
+    build
+    setup_vms
+    debug
+}
+
+function setup_vms() {
+  if [ "$FORCE_SETUP_VM" == "true" ]; then
+    "${CURDIR}"/cattle-dev-vm clean || true
+  fi
+
+  if ! ./scripts/vm.sh node; then
+    "${CURDIR}"/cattle-dev-vm setup
+  elif [ "$RESET_ENV" == "true" ]; then
+    reset_remote_env
+  fi
+}
+
+function debug() {
+  host=$("${CURDIR}"/cattle-dev-vm env | grep HOST | sed "s#HOST=##")
+
+  sleep 15
+  PROJECT_DIR=$PROJECT_DIR MAIN_ARGS=$MAIN_ARGS EXEC_FILE=$EXEC_FILE REMOTE_HOST=$host "${CURDIR}"/cattle-dev-remote-debug remote_setup
+  PROJECT_DIR=$PROJECT_DIR MAIN_ARGS=$MAIN_ARGS EXEC_FILE=$EXEC_FILE REMOTE_HOST=$host "${CURDIR}"/cattle-dev-remote-debug remote_debug
+}
+
+function help() {
+  filename="$FILENAME"
+
+  cat <<EOF
+Usage: $filename <k3s | rke2>
+
+Globals Environment Variables: (able to change)
+  PROJECT_DIR=$PROJECT_DIR
+  DAPPER_OPTS=$DAPPER_OPTS
+  MAIN_ARGS=$MAIN_ARGS
+  EXEC_FILE=$EXEC_FILE
+  FORCE_SETUP_VM=$FORCE_SETUP_VM
+
+Example:
+  PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_ARGS="server" EXEC_FILE="dist/artifacts/k3s" $filename k3s
+EOF
+}
+
+check_args $# 1
+
+PROJECT_DIR=${PROJECT_DIR:?}
+DAPPER_OPTS=${DAPPER_OPTS:-"DAPPER_MODE=bind GODEBUG=y"} # You can inject any ENV defined in DAPPER_ENV
+MAIN_ARGS=${MAIN_ARGS:?}
+EXEC_FILE=${EXEC_FILE:?}
+FORCE_SETUP_VM=${FORCE_SETUP_VM:-false}
+
+case $1 in
+rke2 | k3s)
+  # shellcheck disable=SC1090
+  source "${CURDIR}/projects/$1.sh"
+  main
+  ;;
+esac
