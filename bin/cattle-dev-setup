@@ -6,13 +6,13 @@ source "${CURDIR}/libs/common.sh"
 
 function setup_by_apt() {
   sudo apt update
-  sudo apt install -y build-essential glibc-static
+  sudo apt install -y build-essential glibc-static jq
 }
 
 function setup_by_zypper() {
   sudo zypper ref
-  sudo zypper in -y -t pattern devel_basis
-  sudo zypper in -y glibc-devel-static
+  sudo zypper in -y -t pattern devel_basis jq
+  sudo zypper in -y glibc-devel-static jq
 }
 
 case "$(get_pkgmgr)" in

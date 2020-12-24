@@ -23,7 +23,7 @@ function build() {
   #-CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS $STATIC" -o ${CMD_NAME} ./cmd/k3s/main.go
   #+CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS" -gcflags "all=-N -l" -o ${CMD_NAME} ./cmd/k3s/main.go
 
-  pushd "$PROJECT_DIR"
+  pushd "$PROJECT_DIR" &>/dev/null
 
   cmds=(
     "make .dapper"
@@ -42,7 +42,7 @@ function build() {
     eval "$c"
   done
 
-  popd
+  popd &>/dev/null
 }
 
 function reset_remote_env() {

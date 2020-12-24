@@ -10,7 +10,7 @@ MAIN_ARGS=${MAIN_ARGS:-server}
 EXEC_FILE=${EXEC_FILE:-bin/rke2}
 
 function build() {
-  pushd "$PROJECT_DIR"
+  pushd "$PROJECT_DIR" &>/dev/null
 
   cmds=(
     "make .dapper"
@@ -22,7 +22,7 @@ function build() {
     eval "$c"
   done
 
-  popd
+  popd &>/dev/null
 }
 
 function reset_remote_env() {

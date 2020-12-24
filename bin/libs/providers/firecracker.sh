@@ -24,7 +24,7 @@ function clean() {
   done
 }
 
-function ssh() {
+function ssh_login() {
   sudo ignite ssh "$NODE_PREFIX"-"$1" -i "$PRI_KEY"
 }
 

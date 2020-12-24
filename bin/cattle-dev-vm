@@ -1,29 +1,44 @@
 #!/usr/bin/env bash
 
 CURDIR=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
+FILENAME="$(basename -s .sh "$0")"
 source "${CURDIR}/libs/common.sh"
-source "${CURDIR}/libs/providers/firecracker.sh"
 
 NODE_PREFIX="$(basename -s .sh "$0")"
+WORKPLACE=${WORKPLACE:-/tmp/$FILENAME}
 
 function help() {
   filename="$NODE_PREFIX"
 
   cat <<EOF
-Usage: $filename <setup | clean | ssh | node | env>
+Usage: $filename <provider> <setup | clean | ssh_login | node | env>
 
-❯ setup <number of nodes>   Setup nodes
-❯ clean                     Clean up nodes
-❯ ssh <x-th node>           SSH the node
-❯ node                      Show node names
-❯ env <x-th node>           Show the node environment variables
+provider: firecracker | multipass
+
+❯ setup <number of nodes>       Setup nodes
+❯ clean                         Clean up nodes
+❯ ssh_login <x-th node>         SSH the node
+❯ node                          Show node names
+❯ env <x-th node>               Show the node environment variables
 EOF
 }
 
-check_args $# 1
+check_args $# 2
+
+trap "rm -rf $WORKPLACE || true" EXIT ERR INT TERM
+mkdir -p "$WORKPLACE"
+pushd "$WORKPLACE" &>/dev/null
+
+if [ "$1" != "firecracker" ] && [ "$1" != "multipass" ]; then
+  error "$1 provider not supported"
+fi
+
+# shellcheck disable=SC1090
+source "${CURDIR}/libs/providers/$1.sh"
+shift
 
 case $1 in
-setup | ssh | env)
+setup | ssh_login | env)
   if [ -n "$2" ]; then
     NODE_NUM=$2
   fi
@@ -48,3 +63,4 @@ node)
   exit 1
   ;;
 esac
+popd &>/dev/null

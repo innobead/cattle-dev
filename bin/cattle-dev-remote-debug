@@ -11,16 +11,12 @@ function debug() {
 }
 
 function build() {
-  pushd "$PROJECT_DIR"
+  pushd "$PROJECT_DIR" &>/dev/null
   eval "$BUILD_CMD"
-  popd
+  popd &>/dev/null
 }
 
 function remote_setup() {
-  # shellcheck disable=SC2064
-  trap "rm -rf /$WORKPLACE/setup.sh || true" EXIT ERR INT TERM
-  pushd "$WORKPLACE"
-
   cp "$PROJECT_DIR/$EXEC_FILE" .
 
   _create_setup_script setup.sh
@@ -40,8 +36,6 @@ function remote_setup() {
     "source ~/.bashrc && \$HOME/setup.sh"
   )
   _remote_run "${cmds[@]}"
-
-  popd
 }
 
 function remote_debug() {
@@ -135,7 +129,6 @@ REMOTE_USER=${REMOTE_USER:-root}
 REMOTE_HOST=${REMOTE_HOST:-localhost}
 REMOTE_DEBUG_PORT=${REMOTE_DEBUG_PORT:-2345}
 PRI_KEY=${PRI_KEY:-$HOME/.ssh/id_rsa}
-SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 WORKPLACE=${WORKPLACE:-/tmp/$FILENAME}
 PROJECT_DIR=${PROJECT_DIR:-$(pwd)}
 MAIN_FILE=${MAIN_FILE:-main.go}
@@ -144,6 +137,10 @@ EXEC_FILE=${EXEC_FILE:-$(basename -s .go "$MAIN_FILE")}
 BUILD_CMD=${BUILD_CMD:-go list -m all || true; go build -gcflags \"all=-N -l\" -o $EXEC_FILE $MAIN_FILE}
 REMOTE_EXEC_FILE="$(basename "$EXEC_FILE")"
 
+trap "rm -rf $WORKPLACE || true" EXIT ERR INT TERM
+
+mkdir -p "$WORKPLACE"
+pushd $WORKPLACE &>/dev/null
 case $1 in
 debug | build | remote_setup | remote_debug)
   enable_trace
@@ -157,3 +154,4 @@ debug | build | remote_setup | remote_debug)
   exit 1
   ;;
 esac
+popd &>/dev/null

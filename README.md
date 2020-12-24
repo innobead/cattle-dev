@@ -19,7 +19,7 @@ It's easy to add new provider by adding the provider script in `./bin/libs/provi
 
 - setup
 - clean
-- ssh
+- ssh_login
 - node
 - env
 
