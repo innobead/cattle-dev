@@ -14,7 +14,7 @@ Run the below command to install the required dependencies.
 
 ## cattle-dev-vm
 
-`cattle-dev-vm` is for creating VMs based on different providers. For now, only Firecracker supported. 
+`cattle-dev-vm` is for creating VMs based on different providers. For now, firecracker, multipass supported. 
 It's easy to add new provider by adding the provider script in `./bin/libs/providers` w/ the necessary exported functions including:
 
 - setup
@@ -25,13 +25,15 @@ It's easy to add new provider by adding the provider script in `./bin/libs/provi
 
 ```console
 ❯ ./bin/cattle-dev-vm
-Usage: cattle-dev-vm <setup | clean | ssh | node | env>
+Usage: cattle-dev-vm <provider> <setup | clean | ssh_login | node | env>
 
-❯ setup <number of nodes>   Setup nodes
-❯ clean                     Clean up nodes
-❯ ssh <x-th node>           SSH the node
-❯ node                      Show node names
-❯ env <x-th node>           Show the node environment variables
+provider: firecracker | multipass
+
+❯ setup <number of nodes>       Setup nodes
+❯ clean                         Clean up nodes
+❯ ssh_login <x-th node>         SSH the node
+❯ node                          Show node names
+❯ env <x-th node>               Show the node environment variables
 ```
 
 ## cattle-dev-remote-debug
