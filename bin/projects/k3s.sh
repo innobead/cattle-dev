@@ -10,18 +10,23 @@ MAIN_ARGS=${MAIN_ARGS:-server}
 EXEC_FILE=${EXEC_FILE:-dist/artifacts/k3s}
 
 function build() {
-  ##### 1. Please add gcflags to add debug info in the built artifact
-  #--- a/scripts/package-cli
-  #+++ b/scripts/package-cli
-  #@@ -53,10 +53,8 @@ CMD_NAME=dist/artifacts/k3s${BIN_SUFFIX}
-  # LDFLAGS="
-  #     -X github.com/rancher/k3s/pkg/version.Version=$VERSION
-  #     -X github.com/rancher/k3s/pkg/version.GitCommit=${COMMIT:0:8}
-  #-    -w -s
-  # "
-  #-STATIC="-extldflags '-static'"
-  #-CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS $STATIC" -o ${CMD_NAME} ./cmd/k3s/main.go
-  #+CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS" -gcflags "all=-N -l" -o ${CMD_NAME} ./cmd/k3s/main.go
+cat <<'EOF'
+####################################################################
+### 1. Please add gcflags to add debug info in the built artifact
+#--- a/scripts/package-cli
+#+++ b/scripts/package-cli
+#@@ -53,10 +53,8 @@ CMD_NAME=dist/artifacts/k3s${BIN_SUFFIX}
+# LDFLAGS="
+#     -X github.com/rancher/k3s/pkg/version.Version=$VERSION
+#     -X github.com/rancher/k3s/pkg/version.GitCommit=${COMMIT:0:8}
+#-    -w -s
+# "
+#-STATIC="-extldflags '-static'"
+#-CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS $STATIC" -o ${CMD_NAME} ./cmd/k3s/main.go
+#+CGO_ENABLED=0 "${GO}" build -ldflags "$LDFLAGS" -gcflags "all=-N -l" -o ${CMD_NAME} ./cmd/k3s/main.go
+#
+#
+EOF
 
   pushd "$PROJECT_DIR" &>/dev/null
 
