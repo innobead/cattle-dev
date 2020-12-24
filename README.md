@@ -53,17 +53,17 @@ Usage: cattle-dev-remote-debug <build | debug | remote_setup | remote_debug>
 ❯ remote_debug      Debug the remote host
 
 Globals Environment Variables: (able to change)
-  GO_VERSION=
-  REMOTE_USER=
-  REMOTE_HOST=
-  REMOTE_DEBUG_PORT=
+  GO_VERSION=go1.15.6
+  REMOTE_USER=root
+  REMOTE_HOST=localhost
+  REMOTE_DEBUG_PORT=2345
   PRI_KEY=/home/davidko/.ssh/id_rsa
-  WORKPLACE=
-  PROJECT_DIR=
-  MAIN_FILE=
+  WORKPLACE=/tmp/cattle-dev-remote-debug
+  PROJECT_DIR=/home/davidko/github/innobead/dev
+  MAIN_FILE=main.go
   MAIN_ARGS=
-  EXEC_FILE=
-  BUILD_CMD=
+  EXEC_FILE=main
+  BUILD_CMD=go list -m all || true; go build -gcflags "all=-N -l" -o main main.go
 
 Example:
   PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_FILE=cmd/k3s/main.go MAIN_ARGS="server" REMOTE_HOST=10.62.0.18 cattle-dev-remote-debug build
@@ -84,10 +84,10 @@ Usage: cattle-dev-remote-debug-project <k3s | rke2>
 
 Globals Environment Variables: (able to change)
   PROJECT_DIR=
-  DAPPER_OPTS=
+  DAPPER_OPTS=DAPPER_MODE=bind GODEBUG=y
   MAIN_ARGS=
   EXEC_FILE=
-  FORCE_SETUP_VM=
+  FORCE_SETUP_VM=false
 
 Example:
   PROJECT_DIR=/home/davidko/github/k3s-io/k3s MAIN_ARGS="server" EXEC_FILE="dist/artifacts/k3s" cattle-dev-remote-debug-project k3s

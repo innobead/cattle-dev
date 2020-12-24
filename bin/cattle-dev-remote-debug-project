@@ -5,9 +5,9 @@ FILENAME="$(basename -s .sh "$0")"
 source "${CURDIR}/libs/common.sh"
 
 function main() {
-    build
-    setup_vms
-    debug
+  build
+  setup_vms
+  debug
 }
 
 function setup_vms() {
@@ -48,13 +48,14 @@ Example:
 EOF
 }
 
+DAPPER_OPTS=${DAPPER_OPTS:-"DAPPER_MODE=bind GODEBUG=y"} # You can inject any ENV defined in DAPPER_ENV
+FORCE_SETUP_VM=${FORCE_SETUP_VM:-false}
+
 check_args $# 1
 
 PROJECT_DIR=${PROJECT_DIR:?}
-DAPPER_OPTS=${DAPPER_OPTS:-"DAPPER_MODE=bind GODEBUG=y"} # You can inject any ENV defined in DAPPER_ENV
 MAIN_ARGS=${MAIN_ARGS:?}
 EXEC_FILE=${EXEC_FILE:?}
-FORCE_SETUP_VM=${FORCE_SETUP_VM:-false}
 
 case $1 in
 rke2 | k3s)
